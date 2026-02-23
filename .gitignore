@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+venv/
+*.db
+*.sqlite
+.DS_Store
+node_modules/
+files.zip
+ngrok.exe
