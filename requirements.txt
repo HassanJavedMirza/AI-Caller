@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pymysql
+cryptography
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+pandas>=2.0.0
+python-dotenv
+pydantic[email]
+apscheduler
+httpx
