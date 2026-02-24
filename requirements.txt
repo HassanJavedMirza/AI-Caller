@@ -11,3 +11,4 @@ python-dotenv
 pydantic[email]
 apscheduler
 httpx
+vapi-server-sdk

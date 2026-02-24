@@ -1,4 +1,5 @@
 """
+VAAPI 2
 vapi_service.py — Handles all communication with the Vapi API.
 This file is ready to go — just add your credentials to .env when you
 have a paid number and it will start making real calls automatically.

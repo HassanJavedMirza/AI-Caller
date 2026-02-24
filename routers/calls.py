@@ -1,169 +1,170 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import io
-import json
-from datetime import date
-
-import pandas as pd
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+import logging
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from database import get_db
-from schemas  import BulkUploadResult, InvoiceCreate, InvoiceOut, InvoiceUpdate
+from schemas  import CallCreate, CallOut
 import models
 import auth_utils
 
-router = APIRouter(prefix="/invoices", tags=["Invoices"])
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/calls", tags=["Calls"])
 
 
-def _mark_overdue(db: Session):
-    today = date.today()
-    db.query(models.Invoice).filter(
-        models.Invoice.status == "unpaid",
-        models.Invoice.due_date < today,
-    ).update({"status": "overdue"}, synchronize_session=False)
-    db.commit()
-
-
-@router.get("/stats/summary")
-def invoice_stats(
-    db: Session = Depends(get_db),
-    _:  models.Admin = Depends(auth_utils.get_current_admin),
+@router.get("/", response_model=list[CallOut])
+def list_calls(
+    skip:       int = Query(0,   ge=0),
+    limit:      int = Query(100, ge=1, le=500),
+    invoice_id: int = Query(None),
+    status:     str = Query(None),
+    db:         Session = Depends(get_db),
+    _:          models.Admin = Depends(auth_utils.get_current_admin),
 ):
-    _mark_overdue(db)
-    from sqlalchemy import func
-    rows = db.query(models.Invoice.status, func.count(models.Invoice.invoice_id)).group_by(models.Invoice.status).all()
-    stats = {r[0]: r[1] for r in rows}
-    total = sum(stats.values())
-    return {"total": total, "unpaid": stats.get("unpaid",0), "overdue": stats.get("overdue",0), "paid": stats.get("paid",0), "processing": stats.get("processing",0)}
-
-
-@router.get("/", response_model=list[InvoiceOut])
-def list_invoices(
-    skip:      int = Query(0,   ge=0),
-    limit:     int = Query(100, ge=1, le=500),
-    status:    str = Query(None),
-    client_id: int = Query(None),
-    db:        Session = Depends(get_db),
-    _:         models.Admin = Depends(auth_utils.get_current_admin),
-):
-    _mark_overdue(db)
-    q = db.query(models.Invoice)
+    q = db.query(models.Call).order_by(models.Call.created_at.desc())
+    if invoice_id:
+        q = q.filter(models.Call.invoice_id == invoice_id)
     if status:
-        q = q.filter(models.Invoice.status == status)
-    if client_id:
-        q = q.filter(models.Invoice.client_id == client_id)
+        q = q.filter(models.Call.call_status == status)
     return q.offset(skip).limit(limit).all()
 
 
-@router.get("/{invoice_id}", response_model=InvoiceOut)
-def get_invoice(
-    invoice_id: int,
-    db:         Session = Depends(get_db),
-    _:          models.Admin = Depends(auth_utils.get_current_admin),
-):
-    _mark_overdue(db)
-    inv = db.query(models.Invoice).filter(models.Invoice.invoice_id == invoice_id).first()
-    if not inv:
-        raise HTTPException(status_code=404, detail="Invoice not found")
-    return inv
-
-
-@router.post("/", response_model=InvoiceOut, status_code=status.HTTP_201_CREATED)
-def create_invoice(
-    payload: InvoiceCreate,
+@router.get("/{call_id}", response_model=CallOut)
+def get_call(
+    call_id: int,
     db:      Session = Depends(get_db),
     _:       models.Admin = Depends(auth_utils.get_current_admin),
 ):
-    if not db.query(models.Client).filter(models.Client.client_id == payload.client_id).first():
-        raise HTTPException(status_code=404, detail="Client not found")
-    inv = models.Invoice(**payload.model_dump())
-    db.add(inv)
-    db.commit()
-    db.refresh(inv)
-    return inv
+    call = db.query(models.Call).filter(models.Call.call_id == call_id).first()
+    if not call:
+        raise HTTPException(status_code=404, detail="Call log not found")
+    return call
 
 
-@router.patch("/{invoice_id}", response_model=InvoiceOut)
-def update_invoice(
+@router.get("/{call_id}/transcript")
+def get_transcript(
+    call_id: int,
+    db:      Session = Depends(get_db),
+    _:       models.Admin = Depends(auth_utils.get_current_admin),
+):
+    call = db.query(models.Call).filter(models.Call.call_id == call_id).first()
+    if not call:
+        raise HTTPException(status_code=404, detail="Call log not found")
+    return {
+        "call_id":          call.call_id,
+        "invoice_id":       call.invoice_id,
+        "call_status":      call.call_status,
+        "duration_seconds": call.duration_seconds,
+        "recording_url":    call.recording_url,
+        "transcript":       call.transcript,
+        "ai_summary":       call.ai_summary,
+        "created_at":       call.created_at,
+    }
+
+
+# ── TRIGGER A REAL CALL ───────────────────────────────────────────────────
+
+@router.post("/trigger/{invoice_id}")
+def trigger_call(
     invoice_id: int,
-    payload:    InvoiceUpdate,
     db:         Session = Depends(get_db),
     _:          models.Admin = Depends(auth_utils.get_current_admin),
 ):
-    inv = db.query(models.Invoice).filter(models.Invoice.invoice_id == invoice_id).first()
-    if not inv:
+    """
+    Manually trigger an AI call for a specific invoice.
+    Use this to test calls without waiting for the scheduler.
+    """
+    from vapi_service import make_call, is_vapi_configured
+
+    # Check Vapi is configured
+    if not is_vapi_configured():
+        raise HTTPException(
+            status_code=400,
+            detail="Vapi is not configured. Add VAPI_API_KEY and VAPI_PHONE_NUMBER_ID to .env"
+        )
+
+    # Get invoice
+    invoice = db.query(models.Invoice).filter(
+        models.Invoice.invoice_id == invoice_id
+    ).first()
+    if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(inv, field, value)
+
+    # Get client
+    client = db.query(models.Client).filter(
+        models.Client.client_id == invoice.client_id
+    ).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found for this invoice")
+
+    logger.info(f"[Manual Call] Triggering call for invoice #{invoice_id} — {client.full_name} ({client.phone_number})")
+
+    # Trigger the call
+    result = make_call(
+        customer_phone = client.phone_number,
+        customer_name  = client.full_name,
+        invoice_id     = invoice.invoice_id,
+        amount         = float(invoice.amount),
+        currency       = invoice.currency,
+        due_date       = str(invoice.due_date),
+    )
+
+    # Save call log
+    call_log = models.Call(
+        invoice_id       = invoice.invoice_id,
+        provider_call_id = result.get("call_id"),
+        call_status      = "initiated" if result["success"] else "failed",
+        ai_summary       = result.get("error") if not result["success"] else "Call initiated manually by admin",
+    )
+    db.add(call_log)
+
+    # Update invoice status
+    if result["success"]:
+        invoice.status             = "processing"
+        invoice.last_reminder_sent = datetime.utcnow()
+
     db.commit()
-    db.refresh(inv)
-    return inv
+    db.refresh(call_log)
+
+    if result["success"]:
+        logger.info(f"[Manual Call] ✅ Call initiated — Vapi ID: {result['call_id']}")
+        return {
+            "success":    True,
+            "message":    f"Call initiated to {client.full_name} at {client.phone_number}",
+            "call_id":    call_log.call_id,
+            "vapi_call_id": result["call_id"],
+        }
+    else:
+        logger.error(f"[Manual Call] ❌ Failed — {result['error']}")
+        raise HTTPException(status_code=500, detail=result["error"])
 
 
-@router.delete("/{invoice_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_invoice(
-    invoice_id: int,
-    db:         Session = Depends(get_db),
-    _:          models.Admin = Depends(auth_utils.get_current_admin),
+@router.post("/", response_model=CallOut, status_code=201)
+def create_call_log(
+    payload: CallCreate,
+    db:      Session = Depends(get_db),
+    _:       models.Admin = Depends(auth_utils.get_current_admin),
 ):
-    inv = db.query(models.Invoice).filter(models.Invoice.invoice_id == invoice_id).first()
-    if not inv:
+    if not db.query(models.Invoice).filter(models.Invoice.invoice_id == payload.invoice_id).first():
         raise HTTPException(status_code=404, detail="Invoice not found")
-    db.delete(inv)
+    call = models.Call(**payload.model_dump())
+    db.add(call)
     db.commit()
+    db.refresh(call)
+    return call
 
 
-@router.post("/bulk-upload", response_model=BulkUploadResult)
-def bulk_upload_invoices(
-    file: UploadFile = File(...),
-    db:   Session = Depends(get_db),
-    _:    models.Admin = Depends(auth_utils.get_current_admin),
+@router.delete("/{call_id}", status_code=204)
+def delete_call(
+    call_id: int,
+    db:      Session = Depends(get_db),
+    _:       models.Admin = Depends(auth_utils.get_current_admin),
 ):
-    content  = file.file.read()
-    ext      = file.filename.rsplit(".", 1)[-1].lower()
-    inserted = 0
-    skipped  = 0
-    errors   = []
-
-    try:
-        if ext == "csv":
-            df = pd.read_csv(io.BytesIO(content), dtype=str).fillna("")
-        elif ext == "json":
-            data = json.loads(content)
-            df   = pd.DataFrame(data if isinstance(data, list) else [data])
-        else:
-            raise HTTPException(status_code=400, detail="Only .csv and .json files are supported")
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Could not parse file: {exc}")
-
-    required = {"client_id", "amount", "due_date"}
-    if not required.issubset(df.columns):
-        raise HTTPException(status_code=400, detail=f"File must contain columns: {required}")
-
-    valid_statuses = {"unpaid", "paid", "overdue", "processing"}
-
-    for idx, row in df.iterrows():
-        row_num = idx + 2
-        try:
-            client_id  = int(row["client_id"])
-            amount     = float(row["amount"])
-            due_date   = date.fromisoformat(row["due_date"])
-            currency   = row.get("currency") or "USD"
-            row_status = row.get("status") or "unpaid"
-            if row_status not in valid_statuses:
-                raise ValueError(f"Invalid status '{row_status}'")
-            if not db.query(models.Client).filter(models.Client.client_id == client_id).first():
-                raise ValueError(f"Client ID {client_id} does not exist")
-            inv = models.Invoice(client_id=client_id, amount=amount, currency=currency, due_date=due_date, status=row_status)
-            db.add(inv)
-            db.flush()
-            inserted += 1
-        except Exception as exc:
-            db.rollback()
-            errors.append(f"Row {row_num}: {str(exc)}")
-            skipped += 1
-
+    call = db.query(models.Call).filter(models.Call.call_id == call_id).first()
+    if not call:
+        raise HTTPException(status_code=404, detail="Call log not found")
+    db.delete(call)
     db.commit()
-    return BulkUploadResult(inserted=inserted, skipped=skipped, errors=errors)
