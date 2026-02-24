@@ -9,5 +9,3 @@ venv/
 node_modules/
 files.zip
 ngrok.exe
-__pycache__
-ngrok.exe

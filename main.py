@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from database import Base, check_connection, engine
 from routers  import auth, admins, clients, invoices, calls, settings
@@ -72,6 +73,11 @@ app.include_router(invoices.router)
 app.include_router(calls.router)
 app.include_router(settings.router)
 app.include_router(webhook.router)
+
+# ── Serve frontend HTML files ──────────────────────────────────────────────
+frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
+if os.path.isdir(frontend_dir):
+    app.mount("/app", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
 
 @app.get("/", tags=["Health"])
