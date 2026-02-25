@@ -85,6 +85,23 @@ if os.path.isdir(frontend_dir):
 def root():
     return {"status": "ok", "message": "AI Debt Reminder API is running"}
 
+@app.post("/fix-password", tags=["Health"])
+def fix_password():
+    from database import SessionLocal
+    from passlib.context import CryptContext
+    import models
+    
+    db = SessionLocal()
+    ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    
+    admin = db.query(models.Admin).filter(models.Admin.admin_id == 1).first()
+    if admin:
+        admin.password_hash = ctx.hash("Admin@123")
+        db.commit()
+        db.close()
+        return {"status": "✅ done", "message": "Password is now Admin@123"}
+    db.close()
+    return {"status": "❌ admin not found"}
 
 @app.get("/health", tags=["Health"])
 def health():
