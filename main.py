@@ -87,26 +87,22 @@ def root():
 
 @app.post("/fix-password", tags=["Health"])
 def fix_password():
-    from passlib.context import CryptContext
     from sqlalchemy import text
     
-    ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    new_hash = ctx.hash("Admin@123")
+    # Paste your generated hash here
+    hardcoded_hash = "$2b$12$PASTE_YOUR_HASH_HERE"
     
     with engine.connect() as conn:
         conn.execute(
             text("UPDATE admins SET password_hash = :hash WHERE admin_id = 1"),
-            {"hash": new_hash}
+            {"hash": hardcoded_hash}
         )
         conn.commit()
-        
         result = conn.execute(text("SELECT password_hash FROM admins WHERE admin_id = 1"))
         row = result.fetchone()
         
-    return {
-        "status": "done",
-        "hash_preview": row[0][:10] + "..." if row else "not found"
-    }
+    return {"status": "done", "hash_preview": row[0][:10] + "..."}
+
 
 @app.get("/health", tags=["Health"])
 def health():

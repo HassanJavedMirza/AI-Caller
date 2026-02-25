@@ -23,7 +23,10 @@ SECRET_KEY  = os.getenv("SECRET_KEY", "dev_secret_change_in_production")
 ALGORITHM   = os.getenv("ALGORITHM", "HS256")
 TOKEN_TTL   = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
+pwd_context = CryptContext(
+    schemes=["bcrypt"], 
+    deprecated="auto", 
+    bcrypt__rounds=12)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
