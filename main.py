@@ -87,21 +87,26 @@ def root():
 
 @app.post("/fix-password", tags=["Health"])
 def fix_password():
-    from database import SessionLocal
     from passlib.context import CryptContext
-    import models
+    from sqlalchemy import text
     
-    db = SessionLocal()
     ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    new_hash = ctx.hash("Admin@123")
     
-    admin = db.query(models.Admin).filter(models.Admin.admin_id == 1).first()
-    if admin:
-        admin.password_hash = ctx.hash("Admin@123")
-        db.commit()
-        db.close()
-        return {"status": "✅ done", "message": "Password is now Admin@123"}
-    db.close()
-    return {"status": "❌ admin not found"}
+    with engine.connect() as conn:
+        conn.execute(
+            text("UPDATE admins SET password_hash = :hash WHERE admin_id = 1"),
+            {"hash": new_hash}
+        )
+        conn.commit()
+        
+        result = conn.execute(text("SELECT password_hash FROM admins WHERE admin_id = 1"))
+        row = result.fetchone()
+        
+    return {
+        "status": "done",
+        "hash_preview": row[0][:10] + "..." if row else "not found"
+    }
 
 @app.get("/health", tags=["Health"])
 def health():
