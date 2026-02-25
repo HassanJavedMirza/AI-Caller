@@ -1,553 +1,312 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Admin Login — AICaller</title>
+<title>Admin Login — DebtCall AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
-  --bg:       #08090d;
-  --surface:  #0f1117;
-  --surface2: #13151f;
-  --border:   #1e2130;
-  --border2:  #252838;
-  --accent:   #00e5a0;
-  --accent2:  #0080ff;
-  --text:     #e8eaf0;
-  --text2:    #a8aab8;
-  --muted:    #5a5f72;
-  --error:    #ff4d6d;
-}
+  :root {
+    --bg:      #08090d;
+    --surface: #0f1117;
+    --border:  #1e2130;
+    --accent:  #00e5a0;
+    --text:    #e8eaf0;
+    --muted:   #6b7280;
+    --error:   #ff4d6d;
+  }
 
-body {
-  font-family: 'Space Grotesk', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  -webkit-font-smoothing: antialiased;
-}
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
 
-/* ── LEFT PANEL ── */
-.left {
-  position: relative;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 2.75rem 3rem;
-  overflow: hidden;
-}
+  /* ── LEFT PANEL ── */
+  .left-panel {
+    position: relative;
+    background: linear-gradient(160deg, #0a0f1e 0%, #080d17 100%);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    padding: 3rem;
+    overflow: hidden;
+  }
 
-/* ambient glow blobs */
-.left::before {
-  content: '';
-  position: absolute; top: -160px; left: -160px;
-  width: 520px; height: 520px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(0,229,160,0.09) 0%, transparent 65%);
-  pointer-events: none;
-}
-.left::after {
-  content: '';
-  position: absolute; bottom: -100px; right: -100px;
-  width: 380px; height: 380px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(0,128,255,0.07) 0%, transparent 65%);
-  pointer-events: none;
-}
+  .left-panel::before {
+    content: '';
+    position: absolute; top: -200px; left: -200px;
+    width: 600px; height: 600px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,229,160,0.12), transparent 70%);
+    pointer-events: none;
+  }
 
-/* grid texture overlay */
-.left-grid {
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-}
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem; font-weight: 800;
+    color: var(--text); z-index: 1;
+  }
+  .logo span { color: var(--accent); }
 
-.logo {
-  display: flex; align-items: center; gap: 0.6rem;
-  position: relative; z-index: 2;
-}
-.logo-mark {
-  width: 34px; height: 34px; border-radius: 9px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.72rem; font-weight: 700; color: var(--bg);
-  letter-spacing: -0.5px; flex-shrink: 0;
-}
-.logo-name {
-  font-size: 1.1rem; font-weight: 700;
-  letter-spacing: -0.3px;
-}
-.logo-name em { color: var(--accent); font-style: normal; }
+  .panel-content { z-index: 1; }
 
-/* ── HERO TEXT ── */
-.hero { position: relative; z-index: 2; }
+  .panel-content h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.8rem; font-weight: 800;
+    line-height: 1.1; letter-spacing: -1.5px;
+    margin-bottom: 1.2rem;
+  }
+  .panel-content h2 span { color: var(--accent); }
 
-.hero-tag {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  background: rgba(0,229,160,0.07);
-  border: 1px solid rgba(0,229,160,0.18);
-  border-radius: 100px; padding: 0.3rem 0.75rem;
-  font-size: 0.72rem; font-weight: 600;
-  color: var(--accent); letter-spacing: 0.04em;
-  margin-bottom: 1.5rem;
-}
-.hero-tag::before {
-  content: '';
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 6px rgba(0,229,160,0.6);
-  animation: blink 2.5s ease-in-out infinite;
-}
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
+  .panel-content p {
+    color: var(--muted); font-size: 1rem;
+    line-height: 1.7; max-width: 380px;
+    margin-bottom: 2.5rem;
+  }
 
-.hero h2 {
-  font-size: 2.6rem; font-weight: 700;
-  line-height: 1.1; letter-spacing: -1.5px;
-  margin-bottom: 1.1rem;
-}
-.hero h2 .highlight {
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.hero p {
-  color: var(--text2); font-size: 0.9rem;
-  line-height: 1.75; max-width: 360px;
-  margin-bottom: 2.25rem;
-}
+  .feature-list { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+  .feature-list li {
+    display: flex; align-items: center; gap: 0.75rem;
+    font-size: 0.9rem; color: var(--muted);
+  }
+  .feature-list li::before {
+    content: '✓';
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(0,229,160,0.15);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+  }
 
-/* ── FEATURE CARDS ── */
-.features { display: flex; flex-direction: column; gap: 0.6rem; }
-.feature-card {
-  display: flex; align-items: flex-start; gap: 0.875rem;
-  background: rgba(255,255,255,0.025);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.875rem 1rem;
-  transition: border-color 0.2s;
-}
-.feature-card:hover { border-color: var(--border2); }
-.feature-icon {
-  width: 32px; height: 32px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.95rem; flex-shrink: 0;
-}
-.feature-icon.green { background: rgba(0,229,160,0.1); }
-.feature-icon.blue  { background: rgba(0,128,255,0.1); }
-.feature-icon.amber { background: rgba(245,158,11,0.1); }
-.feature-icon.rose  { background: rgba(255,77,109,0.1); }
-.feature-text {}
-.feature-title { font-size: 0.84rem; font-weight: 600; margin-bottom: 0.15rem; }
-.feature-sub   { font-size: 0.75rem; color: var(--muted); }
+  .panel-footer {
+    z-index: 1;
+    font-size: 0.8rem; color: var(--muted);
+  }
+  .panel-footer a { color: var(--accent); text-decoration: none; }
 
-/* ── 
-LEFT FOOTER ── */
-.left-footer {
-  position: relative; z-index: 2;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.left-footer-copy { font-size: 0.75rem; color: var(--muted); }
-.left-footer a {
-  font-size: 0.78rem; color: var(--text2);
-  text-decoration: none; display: flex; align-items: center; gap: 0.3rem;
-  transition: color 0.15s;
-}
-.left-footer a:hover { color: var(--accent); }
+  /* ── RIGHT PANEL — FORM ── */
+  .right-panel {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 3rem 2rem;
+    background: var(--bg);
+  }
 
-/* ── RIGHT PANEL ── */
-.right {
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 3rem 2.5rem;
-  background: var(--bg);
-  position: relative;
-}
+  .form-box {
+    width: 100%; max-width: 400px;
+  }
 
-/* subtle top border accent */
-.right::before {
-  content: '';
-  position: absolute; top: 0; left: 10%; right: 10%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0,229,160,0.3), transparent);
-}
+  .form-header {
+    margin-bottom: 2.5rem;
+  }
+  .form-header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.9rem; font-weight: 700;
+    letter-spacing: -0.5px; margin-bottom: 0.4rem;
+  }
+  .form-header p { color: var(--muted); font-size: 0.9rem; }
 
-.form-box {
-  width: 100%; max-width: 380px;
-}
+  .form-group { margin-bottom: 1.25rem; }
+  label {
+    display: block;
+    font-size: 0.82rem; font-weight: 500;
+    color: var(--muted); margin-bottom: 0.5rem;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  input {
+    width: 100%; padding: 0.85rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,229,160,0.1);
+  }
+  input::placeholder { color: #3a3f50; }
 
-.form-eyebrow {
-  display: flex; align-items: center; gap: 0.5rem;
-  margin-bottom: 1.75rem;
-}
-.form-eyebrow-line {
-  flex: 1; height: 1px; background: var(--border);
-}
-.form-eyebrow-text {
-  font-size: 0.7rem; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.12em;
-  color: var(--muted); white-space: nowrap;
-}
+  .error-msg {
+    display: none;
+    background: rgba(255,77,109,0.1);
+    border: 1px solid rgba(255,77,109,0.3);
+    color: var(--error);
+    padding: 0.7rem 1rem;
+    border-radius: 7px;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .error-msg.show { display: block; }
 
-.form-title {
-  font-size: 1.75rem; font-weight: 700;
-  letter-spacing: -0.5px; margin-bottom: 0.4rem;
-  line-height: 1.15;
-}
-.form-sub {
-  color: var(--muted); font-size: 0.85rem;
-  margin-bottom: 2rem; line-height: 1.5;
-}
+  .btn-login {
+    width: 100%; padding: 0.9rem;
+    background: var(--accent); color: var(--bg);
+    border: none; border-radius: 8px;
+    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 0 30px rgba(0,229,160,0.25);
+    position: relative; overflow: hidden;
+  }
+  .btn-login:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(0,229,160,0.4); }
+  .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .btn-login .spinner {
+    display: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: var(--bg);
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto;
+  }
+  .btn-login.loading span { display: none; }
+  .btn-login.loading .spinner { display: block; }
 
-/* ── INPUTS ── */
-.field { margin-bottom: 1rem; }
-.field-label {
-  display: block;
-  font-size: 0.72rem; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.08em;
-  color: var(--muted); margin-bottom: 0.4rem;
-}
-.field-wrap { position: relative; }
-.field-icon {
-  position: absolute; left: 0.875rem; top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.9rem; opacity: 0.4; pointer-events: none;
-  line-height: 1;
-}
-.field-wrap input {
-  width: 100%; padding: 0.75rem 0.9rem 0.75rem 2.5rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  color: var(--text);
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.9rem; outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-}
-.field-wrap input:focus {
-  border-color: var(--accent);
-  background: var(--surface2);
-  box-shadow: 0 0 0 3px rgba(0,229,160,0.08);
-}
-.field-wrap input::placeholder { color: var(--muted); font-size: 0.85rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-.password-toggle {
-  position: absolute; right: 0.875rem; top: 50%;
-  transform: translateY(-50%);
-  background: none; border: none; cursor: pointer;
-  color: var(--muted); font-size: 0.8rem;
-  transition: color 0.15s; padding: 0.2rem;
-}
-.password-toggle:hover { color: var(--text2); }
+  .form-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.85rem; color: var(--muted);
+  }
+  .form-footer a { color: var(--accent); text-decoration: none; }
 
-/* ── ERROR ── */
-.error-box {
-  display: none;
-  align-items: center; gap: 0.6rem;
-  background: rgba(255,77,109,0.07);
-  border: 1px solid rgba(255,77,109,0.2);
-  border-left: 3px solid var(--error);
-  color: var(--error);
-  padding: 0.65rem 0.875rem;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  margin-bottom: 1.1rem;
-  animation: slideIn 0.2s ease;
-}
-.error-box.show { display: flex; }
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── SUBMIT BUTTON ── */
-.btn-submit {
-  width: 100%; padding: 0.85rem;
-  background: var(--accent); color: var(--bg);
-  border: none; border-radius: 9px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.9rem; font-weight: 700;
-  cursor: pointer; transition: all 0.2s;
-  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-  position: relative; overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,229,160,0.2);
-  margin-top: 0.25rem;
-}
-.btn-submit::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
-  opacity: 0; transition: opacity 0.2s;
-}
-.btn-submit:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 30px rgba(0,229,160,0.3);
-}
-.btn-submit:hover::before { opacity: 1; }
-.btn-submit:active { transform: translateY(0); }
-.btn-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
-
-.btn-submit .btn-text { transition: opacity 0.15s; }
-.btn-submit .btn-spinner {
-  display: none;
-  width: 17px; height: 17px; border-radius: 50%;
-  border: 2px solid rgba(0,0,0,0.2);
-  border-top-color: var(--bg);
-  animation: spin 0.65s linear infinite;
-}
-.btn-submit.loading .btn-text { display: none; }
-.btn-submit.loading .btn-spinner { display: block; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── BOTTOM NOTE ── */
-.form-note {
-  text-align: center; margin-top: 1.5rem;
-  font-size: 0.78rem; color: var(--muted); line-height: 1.6;
-}
-.form-note strong { color: var(--text2); }
-
-/* ── DIVIDER ── */
-.or-divider {
-  display: flex; align-items: center; gap: 0.75rem;
-  margin: 1.25rem 0;
-}
-.or-divider span { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
-.or-line { flex: 1; height: 1px; background: var(--border); }
-
-/* ── SECURE BADGE ── */
-.secure-badge {
-  display: flex; align-items: center; justify-content: center; gap: 0.4rem;
-  margin-top: 1.75rem;
-  font-size: 0.72rem; color: var(--muted);
-}
-.secure-badge::before {
-  content: '🔒'; font-size: 0.75rem; opacity: 0.5;
-}
-
-/* ── RESPONSIVE ── */
-@media (max-width: 820px) {
-  body { grid-template-columns: 1fr; }
-  .left { display: none; }
-  .right { min-height: 100vh; padding: 2.5rem 1.5rem; }
-  .right::before { display: none; }
-}
+  /* Responsive */
+  @media (max-width: 768px) {
+    body { grid-template-columns: 1fr; }
+    .left-panel { display: none; }
+    .right-panel { min-height: 100vh; }
+  }
 </style>
 </head>
 <body>
 
-<!-- ── LEFT PANEL ── -->
-<div class="left">
-  <div class="left-grid"></div>
+<!-- LEFT BRANDING PANEL -->
+<div class="left-panel">
+  <div class="logo">Debt<span>Call</span> AI</div>
 
-  <div class="logo">
-    <div class="logo-mark">AI</div>
-    <div class="logo-name">AI<em>Caller</em></div>
-  </div>
-
-  <div class="hero">
-    <div class="hero-tag">Admin Portal</div>
-    <h2>Automate your<br/><span class="highlight">debt recovery</span><br/>with AI calls</h2>
+  <div class="panel-content">
+    <h2>Manage your<br/><span>recovery</span><br/>operations</h2>
     <p>
-      AICaller handles overdue follow-ups with human-like AI voice calls,
-      full transcripts, and smart scheduling — so your team focuses on what matters.
+      The admin panel gives you full control over clients, invoices,
+      AI call logs, and scheduler settings — all in one place.
     </p>
-    <div class="features">
-      <div class="feature-card">
-        <div class="feature-icon green">📞</div>
-        <div class="feature-text">
-          <div class="feature-title">AI Voice Calling</div>
-          <div class="feature-sub">Human-like conversations that call overdue clients automatically</div>
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon blue">📊</div>
-        <div class="feature-text">
-          <div class="feature-title">Full Call Transcripts</div>
-          <div class="feature-sub">Every conversation logged, summarised, and searchable</div>
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon amber">⏱</div>
-        <div class="feature-text">
-          <div class="feature-title">Smart Scheduling</div>
-          <div class="feature-sub">Configure call times, active days, and retry rules</div>
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon rose">⬆</div>
-        <div class="feature-text">
-          <div class="feature-title">Bulk Data Upload</div>
-          <div class="feature-sub">Import clients and invoices via CSV or JSON instantly</div>
-        </div>
-      </div>
-    </div>
+    <ul class="feature-list">
+      <li>View and manage all clients and invoices</li>
+      <li>Listen to AI call recordings and transcripts</li>
+      <li>Upload bulk data via CSV or JSON</li>
+      <li>Configure call schedules and retry rules</li>
+      <li>Create and manage admin accounts</li>
+    </ul>
   </div>
 
-  <div class="left-footer">
-    <span class="left-footer-copy">© 2026 AICaller</span>
+  <div class="panel-footer">
     <a href="welcome.html">← Back to home</a>
   </div>
 </div>
 
-<!-- ── RIGHT PANEL ── -->
-<div class="right">
+<!-- RIGHT FORM PANEL -->
+<div class="right-panel">
   <div class="form-box">
-
-    <div class="form-eyebrow">
-      <div class="form-eyebrow-line"></div>
-      <div class="form-eyebrow-text">Admin Access</div>
-      <div class="form-eyebrow-line"></div>
+    <div class="form-header">
+      <h1>Welcome back</h1>
+      <p>Sign in to your admin account to continue.</p>
     </div>
 
-    <div class="form-title">Welcome back</div>
-    <div class="form-sub">Sign in to manage clients, invoices, and AI call operations.</div>
-
-    <div class="error-box" id="errorBox">
-      <span>⚠</span>
-      <span id="errorText">Invalid credentials. Please try again.</span>
+    <div class="error-msg" id="errorMsg">
+      Invalid username or password. Please try again.
     </div>
 
-    <div class="field">
-      <label class="field-label">Username</label>
-      <div class="field-wrap">
-        <span class="field-icon">◎</span>
-        <input
-          type="text"
-          id="username"
-          placeholder="your_username"
-          autocomplete="username"
-          autofocus
-        />
-      </div>
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" placeholder="e.g. admin_main" autocomplete="username" />
     </div>
 
-    <div class="field">
-      <label class="field-label">Password</label>
-      <div class="field-wrap">
-        <span class="field-icon">◐</span>
-        <input
-          type="password"
-          id="password"
-          placeholder="••••••••••"
-          autocomplete="current-password"
-        />
-        <button class="password-toggle" type="button" onclick="togglePassword()" id="pwToggle" title="Show password">
-          👁
-        </button>
-      </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
     </div>
 
-    <button class="btn-submit" id="loginBtn" onclick="handleLogin()">
-      <span class="btn-text">Sign in to Dashboard →</span>
-      <div class="btn-spinner"></div>
+    <button class="btn-login" id="loginBtn" onclick="handleLogin()">
+      <span>Sign in to Dashboard</span>
+      <div class="spinner"></div>
     </button>
 
-    <div class="form-note">
-      Don't have an account?<br/>
-      <strong>Ask an existing admin to create one for you.</strong>
+    <div class="form-footer">
+      Don't have an account? Ask another admin to create one for you.
     </div>
-
-    <div class="secure-badge">Secured with JWT authentication</div>
-
   </div>
 </div>
 
 <script>
-const API = 'http://localhost:8000';
+  const API_BASE = 'https://backend-production-a499a.up.railway.app';
 
-// Already logged in → skip to dashboard
-if (localStorage.getItem('token')) {
-  window.location.href = 'dashboard.html';
-}
-
-async function handleLogin() {
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value;
-  const btn      = document.getElementById('loginBtn');
-
-  hideError();
-
-  if (!username || !password) {
-    showError('Please enter both username and password.');
-    return;
+  // If already logged in, skip straight to dashboard
+  if (localStorage.getItem('token')) {
+    window.location.href = 'dashboard.html';
   }
 
-  btn.classList.add('loading');
-  btn.disabled = true;
+  async function handleLogin() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('loginBtn');
+    const errMsg   = document.getElementById('errorMsg');
 
-  try {
-    const res = await fetch(`${API}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      showError(data.detail || 'Login failed. Please check your credentials.');
+    if (!username || !password) {
+      showError('Please enter your username and password.');
       return;
     }
 
-    localStorage.setItem('token', data.access_token);
-    localStorage.setItem('username', username);
+    // Loading state
+    btn.classList.add('loading');
+    btn.disabled = true;
+    errMsg.classList.remove('show');
 
-    // brief success flash before redirect
-    btn.style.background = '#00c47d';
-    btn.innerHTML = `<span class="btn-text">✓ Authenticated</span>`;
-    setTimeout(() => { window.location.href = 'dashboard.html'; }, 400);
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ username, password }),
+      });
 
-  } catch (err) {
-    showError('Cannot reach the server. Is the API running on port 8000?');
-  } finally {
-    btn.classList.remove('loading');
-    btn.disabled = false;
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.detail || 'Login failed. Please try again.');
+        return;
+      }
+
+      // Store the token and redirect
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('username', username);
+      window.location.href = 'dashboard.html';
+
+    } catch (err) {
+      showError('Cannot connect to the server. Is the API running?');
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
   }
-}
 
-function showError(msg) {
-  document.getElementById('errorText').textContent = msg;
-  document.getElementById('errorBox').classList.add('show');
-}
-function hideError() {
-  document.getElementById('errorBox').classList.remove('show');
-}
-
-function togglePassword() {
-  const input = document.getElementById('password');
-  const btn   = document.getElementById('pwToggle');
-  if (input.type === 'password') {
-    input.type = 'text';
-    btn.textContent = '🙈';
-    btn.title = 'Hide password';
-  } else {
-    input.type = 'password';
-    btn.textContent = '👁';
-    btn.title = 'Show password';
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('show');
   }
-}
 
-// Enter key support
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter') handleLogin();
-});
-
-// Clear error on typing
-['username','password'].forEach(id => {
-  document.getElementById(id).addEventListener('input', hideError);
-});
+  // Allow pressing Enter to submit
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleLogin();
+  });
 </script>
+
 </body>
 </html>
