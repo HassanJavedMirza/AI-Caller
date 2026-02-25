@@ -90,7 +90,7 @@ def fix_password():
     from sqlalchemy import text
     
     # Paste your generated hash here
-    hardcoded_hash = "$2b$12$PASTE_YOUR_HASH_HERE"
+    hardcoded_hash = "$2b$12$X.aCBPi4.6E3rP9jUPZNDufqlVX6UMeXIuQg/XeutTLnmF1Hb8WVC"
     
     with engine.connect() as conn:
         conn.execute(
